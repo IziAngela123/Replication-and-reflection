@@ -1,0 +1,80 @@
+---
+  #EAPP Project = Figure 3
+  
+---
+install.packages("forcats")
+install.packages("patchwork")
+install.packages("ggplot2")
+
+
+library(patchwork)
+library(readxl)
+library(dplyr) #not dyplr
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(forcats)
+
+inDir = "(include file path)"
+inFile = file.path(inDir, "EAPP_data for figures.xlsx")
+file.exists(inFile)
+
+
+#Assign data on figure 4
+Figure4 <- read_excel(inFile, sheet = 3)
+
+
+#select relevant data that corresponds to figure 4
+Figure_4 <- Figure4 %>% 
+  slice(2:3) %>% 
+  select(-1) 
+
+
+
+names(Figure_4)[1:11] <- c("Strategy_type", "Burundi", "Djibouti", "Egypt", "Ethiopia", "Kenya", "Rwanda", "Sudan", "Tanzania", "Uganda", "EAPP (Total)")
+
+
+#probably don't need to pivot
+Figure_4_pivot <- Figure_4 %>% 
+  pivot_longer(
+    cols = -Strategy_type,
+    names_to = "Countries",
+    values_to = "Values"
+  ) 
+
+
+Figure_4_pivot$Values <- as.numeric(Figure_4_pivot$Values)
+
+
+Figure_4_pivot <- Figure_4_pivot %>% 
+  mutate(Percent = Values*100)
+
+
+
+#to order the bars within a country (start with red then green)
+Figure_4_pivot$Strategy_type <- factor(
+  Figure_4_pivot$Strategy_type,
+  levels = c("Worst case","Most Resilient Strategy"))
+
+
+
+ggplot(Figure_4_pivot,aes(x = Percent, y = reorder(Countries, -Percent), fill = Strategy_type)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  scale_x_continuous(limits = c(-19, 100), breaks = seq(-20, 100, by = 20)) +
+  scale_fill_manual(labels = c("Worst case" = "No Adaptation", "Most Resilient Strategy" = "Includes Adaptation"),
+                    values = c("red3", "green4")) +
+  labs(title = "Cumulative Electricity Expenditure under two Strategies (2017-2050)", fill = "Strategy Type", x = "Difference in cumulative consumer electricity expenditure (%)") +
+  theme_classic() +
+  theme(axis.title.y = element_blank(), legend.title = element_text(), plot.title = element_text(face = "bold", hjust = 0.5))
+
+
+
+
+
+
+
+
+
+
+
