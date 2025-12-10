@@ -1,0 +1,100 @@
+---
+  #EAPP Project = Figure 2
+---
+install.packages("forcats")
+install.packages("patchwork")
+install.packages("ggplot2")
+
+
+library(patchwork)
+library(readxl)
+library(dplyr) #not dyplr
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(forcats)
+
+inDir = "C:/Users/Angela/OneDrive - Middlebury College/Desktop/Angela/Monterey/Academics/2025/Data in env't decision-making/My project"
+inFile = file.path(inDir, "EAPP_data for figures.xlsx")
+file.exists(inFile)
+
+
+#Assigning data for figure 2
+Figure2 <- read_excel(inFile, sheet = 1)
+
+
+
+
+#Selecting the data for the first chart in figure 2
+Baseline_EAPP_hist <- Figure2 %>% 
+  slice(1:11) %>% 
+  select(-1:-4) 
+
+
+names(Baseline_EAPP_hist)[1] <- "Source"
+
+
+
+Baseline_both_pivot <- Baseline_EAPP_hist %>% 
+  pivot_longer(
+    cols = -Source,
+    names_to = "Year",
+    values_to = "Generation"
+  ) %>% 
+  mutate(Year = as.integer(Year))
+
+
+
+Baseline_one_pivot <- Baseline_both_pivot %>% 
+  filter(Source != "Annualised electricity cost (USD/kWh)") 
+
+
+source_color = c("#8FBC8F", "cornsilk3","#FDB813","#87CEEB","deeppink3","deepskyblue3", "darkseagreen2","navajowhite","sienna3","orange4")
+
+
+#Separating the cost line from the sources
+Annual_cost <- Baseline_both_pivot %>% 
+  filter(Source == "Annualised electricity cost (USD/kWh)") %>% 
+  rename(Annualized_Cost = Generation) %>% 
+  select(-1)
+
+
+#to reorder the sources on the legend (suggested by ChatGPT)
+Baseline_one_pivot$Source <- factor(
+  Baseline_one_pivot$Source,
+  levels = rev(c(
+    "Coal","HFO","Diesel","Gas","Hydro",
+    "Nuclear","Wind","Solar","Geothermal","Biomass"
+  ))
+)
+
+
+#creating the baseline graph
+ggplot()+
+  geom_col(data = Baseline_one_pivot, 
+           aes(x=Year,y = Generation, fill = Source))+
+  
+  scale_fill_manual(name = "Source", values = source_color)+
+  
+  geom_line(data = Annual_cost, 
+            aes(x = Year, y=Annualized_Cost*23000, color = "Annualized cost"), linewidth = 1.2)+
+  
+  scale_color_manual(name = "", values = c("Annualized cost" = "red")) +
+  
+  guides(
+    fill = guide_legend(order = 1, override.aes = list(colour = NA)),
+    colour = guide_legend(order = 2, override.aes = list(fill = NA, linetype = 1))
+  ) +
+  
+  scale_y_continuous(name = "Electricity Generation (TWh)",
+                     sec.axis = sec_axis(~ . / 23000,
+                                         name = "Annualised cost of electricity generation (USD/kWh)"))+
+  labs(title = "Electricity Generation in the EAPP")+
+  theme_classic()+
+  theme(legend.position = "right", 
+        axis.title.x = element_text(size = 11), axis.title.y = element_text(size = 11),
+        plot.title = element_text(hjust = 0.5))
+
+
+
