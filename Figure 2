@@ -1,0 +1,243 @@
+---
+#EAPP Project = Figure 2
+
+---
+install.packages("forcats")
+install.packages("patchwork")
+install.packages("ggplot2")
+
+library(grid)
+library(patchwork)
+library(readxl)
+library(dplyr) #not dyplr
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(forcats)
+
+inDir = "(filepath)"
+inFile = file.path(inDir, "EAPP_data for figures.xlsx")
+file.exists(inFile)
+
+
+Figure2 <- read_excel(inFile, sheet = 1)
+
+
+
+
+source_color = c("#8FBC8F", "cornsilk3","#FDB813","#87CEEB","deeppink3","deepskyblue3", "darkseagreen2","navajowhite","sienna3","orange4")
+
+
+
+
+
+#Creating the TANZANIA graph
+
+
+Baseline_Tanzania <- Figure2 %>% 
+  slice(15:25) %>% 
+  select(-1:-4) 
+
+
+
+names(Baseline_Tanzania)[1] <- "Source"
+
+
+
+Baseline_TZ_pivot <- Baseline_Tanzania %>% 
+  pivot_longer(
+    cols = -Source,
+    names_to = "Year",
+    values_to = "Generation"
+  ) %>% 
+  mutate(Year = as.integer(Year))
+
+Baseline_TZ_bars <- Baseline_TZ_pivot %>% 
+  filter(Source != "Annualised electricity cost (USD/kWh)") %>% 
+  group_by(Year) %>% 
+  mutate(Percent = Generation/sum(Generation)*100) %>% 
+  ungroup()
+
+
+Baseline_TZ_line <- Baseline_TZ_pivot %>% 
+  filter(Source == "Annualised electricity cost (USD/kWh)") %>% 
+  rename(Annual_cost = Generation) %>% 
+  select(-1)
+
+
+Baseline_TZ_bars$Source <- factor(Baseline_TZ_bars$Source,
+  levels = rev(c(
+    "Coal","HFO","Diesel","Gas","Hydro",
+    "Nuclear","Wind","Solar","Geothermal","Biomass"
+  )))
+
+
+p2 <- ggplot()+
+  geom_col(data = Baseline_TZ_bars,aes(x = Year, y = Percent, fill = Source)) +
+  scale_fill_manual(name = "Source",
+                    values = source_color) +
+  geom_line(data = Baseline_TZ_line, 
+            aes(x = Year, y = Annual_cost*1200, color = "Annualized cost"), 
+            linewidth = 1.2) +
+  scale_color_manual(name = "", values = c("Annualized cost" = "orangered2")) +
+  scale_y_continuous(name = "Electricity Generation Mix (%)",
+                     sec.axis = sec_axis(~ . / 1200,
+                                         name = "Annualised cost of electricity generation\n(USD/kWh)")) +
+  labs(title = "Tanzania") +
+  theme_classic() +
+  theme(axis.title.y.right = element_blank(),
+        legend.position = "none", 
+        axis.title.x = element_blank(),
+        axis.title.y.left = element_blank(), 
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+#Creating the graph for Ethiopia
+
+
+Baseline_Ethiopia <- Figure2 %>% 
+  slice(29:39) %>% 
+  select(-1:-4) 
+
+
+
+names(Baseline_Ethiopia)[1] <- "Source"
+
+
+
+Baseline_E_pivot <- Baseline_Ethiopia %>% 
+  pivot_longer(
+    cols = -Source,
+    names_to = "Year",
+    values_to = "Generation"
+  ) %>% 
+  mutate(Year = as.integer(Year))
+
+Baseline_E_bars <- Baseline_E_pivot %>% 
+  filter(Source != "Annualised electricity cost (USD/kWh)") %>% 
+  group_by(Year) %>% 
+  mutate(Percent = Generation/sum(Generation)*100) %>% 
+  ungroup()
+
+
+Baseline_E_line <- Baseline_E_pivot %>% 
+  filter(Source == "Annualised electricity cost (USD/kWh)") %>% 
+  rename(Annual_cost = Generation) %>% 
+  select(-1)
+
+
+Baseline_E_bars$Source <- factor(Baseline_E_bars$Source,
+                                  levels = rev(c(
+                                    "Coal","HFO","Diesel","Gas","Hydro",
+                                    "Nuclear","Wind","Solar","Geothermal","Biomass"
+                                  )))
+
+
+p3 <- ggplot()+
+  geom_col(data = Baseline_E_bars,aes(x = Year, y = Percent, fill = Source)) +
+  scale_fill_manual(name = "Source",
+                    values = source_color) +
+  geom_line(data = Baseline_E_line, 
+            aes(x = Year, y = Annual_cost*1200, color = "Annualized cost"), 
+            linewidth = 1.2) +
+  scale_color_manual(name = "", values = c("Annualized cost" = "orangered2")) +
+  scale_y_continuous(name = "Electricity Generation Mix (%)",
+                     sec.axis = sec_axis(~ . / 1200,
+                                         name = "Annualised cost of electricity generation (USD/kWh)")) +
+  labs(title = "Ethiopia") +
+  theme_classic() +
+  theme(axis.title.y.right = element_text(angle = -90,
+                                          size = 15),
+        legend.position = "none", 
+        axis.title.x = element_blank(), 
+        axis.title.y.left = element_text(angle = 90, size = 15),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+
+
+#Creating the graph for Uganda
+
+
+Baseline_Uganda <- Figure2 %>% 
+  slice(44:54) %>% 
+  select(-1:-4) 
+
+
+
+names(Baseline_Uganda)[1] <- "Source"
+
+
+
+Baseline_UG_pivot <- Baseline_Uganda %>% 
+  pivot_longer(
+    cols = -Source,
+    names_to = "Year",
+    values_to = "Generation"
+  ) %>% 
+  mutate(Year = as.integer(Year))
+
+Baseline_UG_bars <- Baseline_UG_pivot %>% 
+  filter(Source != "ACOE (USD/kWh)") %>% 
+  group_by(Year) %>% 
+  mutate(Percent = Generation/sum(Generation)*100) %>% 
+  ungroup()
+
+
+Baseline_UG_line <- Baseline_UG_pivot %>% 
+  filter(Source == "ACOE (USD/kWh)") %>% 
+  rename(Annual_cost = Generation) %>% 
+  select(-1)
+
+
+Baseline_UG_bars$Source <- factor(Baseline_UG_bars$Source,
+                                 levels = rev(c(
+                                   "Coal","HFO","Diesel","Gas","Hydro",
+                                   "Nuclear","Wind","Solar","Geothermal","Biomass"
+                                 )))
+
+p4 <- ggplot()+
+  geom_col(data = Baseline_UG_bars,aes(x = Year, y = Percent, fill = Source)) +
+  scale_fill_manual(name = "Source",
+                    values = source_color) +
+  geom_line(data = Baseline_UG_line, 
+            aes(x = Year, y = Annual_cost*1200, color = "Annualized cost"), 
+            linewidth = 1.2) +
+  scale_color_manual(name = "", values = c("Annualized cost" = "orangered2")) +
+  scale_y_continuous(name = "Electricity Generation Mix (%)",
+                     sec.axis = sec_axis(~ . / 1200,
+                                         name = "Annualised cost of electricity generation\n(USD/kWh)")) +
+  labs(title = "Uganda") +
+  theme_classic() +
+  theme(legend.position = "none", 
+        axis.title.x = element_text(size = 10),
+        axis.title.y.left = element_blank(), 
+        plot.title = element_text(hjust = 0.5), 
+        axis.title.y.right = element_blank())
+
+
+
+#Placing the 3 graphs together in a 3 x 1 grid
+
+
+(p2) / (p3) / (p4) +
+  plot_layout(guides = "collect") +
+  plot_annotation(title = "Electricity Generation Mix under Historical Trends (2017 - 2050)", 
+                  theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5), 
+                                plot.margin = margin(20, 180, 20, 20)
+                               )) +
+  theme(legend.position = "right") +
+  theme(legend.position = c(1.15, 0.5),                         # place legend outside to the right
+        legend.justification = c(0, 0.5),
+        axis.title.y.left = element_blank(), 
+        axis.title.y.right = element_blank())
+
+
+
+
+
